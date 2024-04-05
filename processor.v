@@ -261,7 +261,7 @@ module processor(
     wire [31:0] DIV_IR_W;
     register reg_div_ir_w(not_clock, div_rdy, DIV_IR, DIV_IR_W, reset);
     wire true_div_select;
-    assign true_div_select = div_select & (~DIV_IR_W[6] & ~DIV_IR_W[5] & DIV_IR_W[4] & DIV_IR_W[3] & DIV_IR_W[2]);
+    assign true_div_select = div_stall & div_select & (~DIV_IR_W[6] & ~DIV_IR_W[5] & DIV_IR_W[4] & DIV_IR_W[3] & DIV_IR_W[2]);
 
     
 //Execute/Memory
@@ -305,7 +305,7 @@ module processor(
     assign write_reg_muldiv[4:0] = DIV_IR_W[26:22];
     assign write_reg_norm[4:0] = MW_IR[26:22];
     assign rstatus[4:0] = 5'd30;
-    mux_2_5 mux_write_reg(write_reg_one, true_div_select && div_stall, write_reg_norm, write_reg_muldiv);
+    mux_2_5 mux_write_reg(write_reg_one, true_div_select, write_reg_norm, write_reg_muldiv);
     mux_2_5 mux_write_rstatus(write_reg, setx, write_reg_one, rstatus);
 
     //determine data to write
@@ -314,7 +314,7 @@ module processor(
     assign T_data[31:27] = 5'd0;
     mux_2_32 mux_writeback_data(data_no_md, select_ALU_data, MW_ALU_OUT, MW_Data);
     mux_2_32 mux_rstatus_data(data_with_rstatus, setx, data_no_md, T_data);
-    mux_2_32 mux_writeback_md(data_with_div, true_div_select && div_stall, data_with_rstatus, DIV_OUT);
+    mux_2_32 mux_writeback_md(data_with_div, true_div_select, data_with_rstatus, DIV_OUT);
     mux_2_32 mux_jaldisablewdata(W_data, jal_disable_W, data_with_div, nop);
 	
 /* END CODE */
