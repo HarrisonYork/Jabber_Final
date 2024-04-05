@@ -27,13 +27,18 @@
 module Wrapper (clock, reset,
 	ACL_CIPO, ACL_COPI,
 	ACL_SCLK, ACL_CSN,
-	ACL_INTERRUPT
+	ACL_INTERRUPT,
+	LED, SEG, DP, AN
 	);
 
 	input clock, reset, ACL_CIPO;
 	input [1:0] ACL_INTERRUPT;
 
 	output ACL_COPI, ACL_SCLK, ACL_CSN;
+	output [14:0] LED;
+	output [6:0] SEG,           // 7 segments of display
+    output DP,                  // decimal point of display
+    output [7:0] AN
 
 	wire rwe, mwe;
 	wire[4:0] rd, rs1, rs2;
@@ -41,23 +46,39 @@ module Wrapper (clock, reset,
 		rData, regA, regB,
 		memAddr, memDataIn, memDataOut;
 
+	//make 4MHz clock
+	wire clock4MHz;
 
+    clock_gen clock_generation(
+        .CLK100MHZ(clock),
+        .clk_4MHz(clock4MHz)
+    );
 
 	// SPI Controller
-	wire input_data_valid, output_data_valid, next_byte_ready;
-	wire [7:0] COPI_BYTE, CIPO_BYTE;
-
 	assign ACL_CSN = 1'b0; //active low, enable accelerometer
+	wire [14:0] acl_data;
 
-	SPIController SPI(.i_clk(clock), .i_reset_n(reset),
-		.i_tx_byte(COPI_BYTE), .i_tx_dv(input_data_valid), .o_tx_ready(next_byte_ready),
-		.o_rx_dv(output_data_valid), .o_rx_byte(CIPO_BYTE),
-		.o_spi_clk(ACL_SCLK), .i_spi_cipo(ACL_CIPO), .o_spi_copi(ACL_COPI));
+	SPIController spi_control(
+        .iclk(clock4MHz),
+        .miso(ACL_CIPO),
+        .sclk(ACL_SCLK),
+        .mosi(ACL_COPI),
+        .cs(ACL_CSN),
+        .acl_data(acl_data)
+    );
 
-	// need to create instructions to send a byte to accelerometer (COPI_BYTE)
-	// stall cpu until receive a byte back from a read (output_data_valid) or (next_byte_ready)
-	//
+	//seven segment display
+	seg7_control display_control(
+        .CLK100MHZ(clock),
+        .acl_data(acl_data),
+        .seg(SEG),
+        .dp(DP),
+        .an(AN)
+    );
 
+	assign LED[14:10] = acl_data[14:10];    // 5 bits of x data
+    assign LED[9:5]   = acl_data[9:5];     // 5 bits of y data
+    assign LED[4:0]   = acl_data[4:0];      // 5 bits of z data
 
 
 	// MEMORY FILE

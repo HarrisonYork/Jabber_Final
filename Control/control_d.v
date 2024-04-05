@@ -1,7 +1,7 @@
 module control_d(instruction, switch_B, select_PC_T, jal, select_rstatus);
     input [31:0] instruction;
 
-    output switch_B, add_imm, select_PC_T, jal, select_rstatus;
+    output switch_B, select_PC_T, jal, select_rstatus;
     
     wire [4:0] opcode;
     assign opcode[4:0] = instruction[31:27];
