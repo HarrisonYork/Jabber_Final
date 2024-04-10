@@ -25,19 +25,11 @@
  **/
 
 module Wrapper (clock, reset,
-	ACL_CIPO, ACL_COPI,
-	ACL_SCLK, ACL_CSN,
-	ACL_INTERRUPT,
-	LED, SEG, DP, AN
-	);
+	servo1, servo2, servo3, servo4, servo5, servo6);
 
-	input clock, reset, ACL_CIPO;
-	input [1:0] ACL_INTERRUPT;
-
-	output ACL_COPI, ACL_SCLK, ACL_CSN, DP;
-	output [14:0] LED;
-	output [6:0] SEG;           // 7 segments of display
-    output [7:0] AN;
+	input clock, reset;
+	
+	output servo1, servo2, servo3, servo4, servo5, servo6;
 
 	wire rwe, mwe;
 	wire[4:0] rd, rs1, rs2;
@@ -48,39 +40,12 @@ module Wrapper (clock, reset,
 	// MEMORY FILE
 	localparam INSTR_FILE = "addi_basic";
 
-	//make 4MHz clock
-	wire clock4MHz;
+	//servo control
 
-    clock_gen clock_generation(
-        .CLK100MHZ(clock),
-        .clk_4MHz(clock4MHz)
-    );
+	//add PWM serializer for each servo
+	// make instruction that outputs from processor to serializer
+	// change duty cycle as needed
 
-	// SPI Controller
-	wire [14:0] acl_data;
-
-	SPIController spi_control(
-        .iclk(clock4MHz),
-        .miso(ACL_CIPO),
-        .sclk(ACL_SCLK),
-        .mosi(ACL_COPI),
-        .cs(ACL_CSN),
-        .acl_data(acl_data)
-    );
-
-	//seven segment display
-	seg7_control display_control(
-        .CLK100MHZ(clock),
-        .acl_data(acl_data),
-        .seg(SEG),
-        .dp(DP),
-        .an(AN)
-    );
-
-	assign LED[14:10] = acl_data[14:10];    // 5 bits of x data
-    assign LED[9:5]   = acl_data[9:5];     // 5 bits of y data
-    assign LED[4:0]   = acl_data[4:0];      // 5 bits of z data
-	
 	// Main Processing Unit
 	processor CPU(.clock(clock), .reset(reset), 
 								
