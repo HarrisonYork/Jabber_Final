@@ -34,10 +34,9 @@ module Wrapper (clock, reset,
 	input clock, reset, ACL_CIPO;
 	input [1:0] ACL_INTERRUPT;
 
-	output ACL_COPI, ACL_SCLK, ACL_CSN;
+	output ACL_COPI, ACL_SCLK, ACL_CSN, DP;
 	output [14:0] LED;
 	output [6:0] SEG;           // 7 segments of display
-    output DP;                  // decimal point of display
     output [7:0] AN;
 
 	wire rwe, mwe;
@@ -45,6 +44,9 @@ module Wrapper (clock, reset,
 	wire[31:0] instAddr, instData, 
 		rData, regA, regB,
 		memAddr, memDataIn, memDataOut;
+
+	// MEMORY FILE
+	localparam INSTR_FILE = "addi_basic";
 
 	//make 4MHz clock
 	wire clock4MHz;
@@ -55,7 +57,6 @@ module Wrapper (clock, reset,
     );
 
 	// SPI Controller
-	assign ACL_CSN = 1'b0; //active low, enable accelerometer
 	wire [14:0] acl_data;
 
 	SPIController spi_control(
@@ -79,10 +80,6 @@ module Wrapper (clock, reset,
 	assign LED[14:10] = acl_data[14:10];    // 5 bits of x data
     assign LED[9:5]   = acl_data[9:5];     // 5 bits of y data
     assign LED[4:0]   = acl_data[4:0];      // 5 bits of z data
-
-
-	// MEMORY FILE
-	localparam INSTR_FILE = "addi_basic";
 	
 	// Main Processing Unit
 	processor CPU(.clock(clock), .reset(reset), 

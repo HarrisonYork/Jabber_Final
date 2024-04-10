@@ -1,3 +1,4 @@
+./seg7_control.v
 ./Wrapper_tb.v
 ./RegFile/register_64.v
 ./RegFile/regfile_tb.v
@@ -24,7 +25,9 @@
 ./muldiv/half_adder.v
 ./muldiv/divider.v
 ./muldiv/full_adder.v
+./clock_gen.v
 ./ROM.v
+./SPIController.v
 ./Control/control_mem.v
 ./Control/control_div.v
 ./Control/control_d.v
@@ -51,4 +54,3 @@
 ./ALU/shifting/leftshift1_64.v
 ./ALU/not_.v
 ./ALU/and_.v
-./SPIController.v

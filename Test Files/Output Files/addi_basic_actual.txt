@@ -29,6 +29,24 @@ Cycle  38: Wrote 28 into register 28
 Cycle  39: Wrote X into register X
 Cycle  40: Wrote X into register X
 Cycle  41: Wrote X into register X
+Cycle  42: Wrote X into register X
+Cycle  43: Wrote X into register X
+Cycle  44: Wrote X into register X
+Cycle  45: Wrote X into register X
+Cycle  46: Wrote X into register X
+Cycle  47: Wrote X into register X
+Cycle  48: Wrote X into register X
+Cycle  49: Wrote X into register X
+Cycle  50: Wrote X into register X
+Cycle  51: Wrote X into register X
+Cycle  52: Wrote X into register X
+Cycle  53: Wrote X into register X
+Cycle  54: Wrote X into register X
+Cycle  55: Wrote X into register X
+Cycle  56: Wrote X into register X
+Cycle  57: Wrote X into register X
+Cycle  58: Wrote X into register X
+Cycle  59: Wrote X into register X
 ============== Testing Mode ==============
 Reg  0:           0
 Reg  1:           1
