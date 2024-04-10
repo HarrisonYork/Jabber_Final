@@ -36,9 +36,9 @@ module Wrapper (clock, reset,
 
 	output ACL_COPI, ACL_SCLK, ACL_CSN;
 	output [14:0] LED;
-	output [6:0] SEG,           // 7 segments of display
-    output DP,                  // decimal point of display
-    output [7:0] AN
+	output [6:0] SEG;           // 7 segments of display
+    output DP;                  // decimal point of display
+    output [7:0] AN;
 
 	wire rwe, mwe;
 	wire[4:0] rd, rs1, rs2;
