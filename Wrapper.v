@@ -25,19 +25,14 @@
  **/
 
 module Wrapper (clock, reset,
-	ACL_CIPO, ACL_COPI,
-	ACL_SCLK, ACL_CSN,
-	ACL_INTERRUPT,
-	LED, SEG, DP, AN
-	);
+	SERVO_PWM);
 
-	input clock, reset, ACL_CIPO;
-	input [1:0] ACL_INTERRUPT;
-
-	output ACL_COPI, ACL_SCLK, ACL_CSN, DP;
-	output [14:0] LED;
-	output [6:0] SEG;
-    output [7:0] AN;
+	input clock, reset;
+	
+	output reg [5:0] SERVO_PWM;
+	always @(servo_pwm) begin
+	   SERVO_PWM = servo_pwm;
+    end
 
 	wire rwe, mwe;
 	wire[4:0] rd, rs1, rs2;
@@ -48,39 +43,56 @@ module Wrapper (clock, reset,
 	// MEMORY FILE
 	localparam INSTR_FILE = "addi_basic";
 
-	//make 4MHz clock
-	wire clock4MHz;
+	//servo control
 
-    clock_gen clock_generation(
-        .CLK100MHZ(clock),
-        .clk_4MHz(clock4MHz)
+	//add PWM serializer for each servo
+	// make instruction that outputs from processor to serializer
+	// change duty cycle as needed
+	wire [6:0] SERVO0_DUTY,  SERVO1_DUTY,  SERVO2_DUTY,  SERVO3_DUTY,  SERVO4_DUTY,  SERVO5_DUTY;
+	assign SERVO0_DUTY = 7'd10;
+	assign SERVO1_DUTY = 7'd10;
+	assign SERVO2_DUTY = 7'd10;
+	assign SERVO3_DUTY = 7'd10;
+	assign SERVO4_DUTY = 7'd10;
+	assign SERVO5_DUTY = 7'd10;
+	wire [5:0] servo_pwm;
+	PWMSerializer servo0(
+    .clk(clock),              // System Clock
+    .reset(reset),            // Reset the counter
+    .duty_cycle(SERVO0_DUTY),       // Duty Cycle of the Wave, between 0 and 99
+    .signal(servo_pwm[0])   // Output PWM signal
+    );
+	PWMSerializer servo1(
+    .clk(clock),              // System Clock
+    .reset(reset),            // Reset the counter
+    .duty_cycle(SERVO1_DUTY),       // Duty Cycle of the Wave, between 1 and 99
+    .signal(servo_pwm[1])   // Output PWM signal
+    );
+	PWMSerializer servo2(
+    .clk(clock),              // System Clock
+    .reset(reset),            // Reset the counter
+    .duty_cycle(SERVO2_DUTY),       // Duty Cycle of the Wave, between 2 and 99
+    .signal(servo_pwm[2])   // Output PWM signal
+    );
+	PWMSerializer servo3(
+    .clk(clock),              // System Clock
+    .reset(reset),            // Reset the counter
+    .duty_cycle(SERVO3_DUTY),       // Duty Cycle of the Wave, between 3 and 99
+    .signal(servo_pwm[3])   // Output PWM signal
+    );
+	PWMSerializer servo4(
+    .clk(clock),              // System Clock
+    .reset(reset),            // Reset the counter
+    .duty_cycle(SERVO4_DUTY),       // Duty Cycle of the Wave, between 4 and 99
+    .signal(servo_pwm[4])   // Output PWM signal
+    );
+	PWMSerializer servo5(
+    .clk(clock),              // System Clock
+    .reset(reset),            // Reset the counter
+    .duty_cycle(SERVO5_DUTY),       // Duty Cycle of the Wave, between 5 and 99
+    .signal(servo_pwm[5])   // Output PWM signal
     );
 
-	// SPI Controller
-	wire [14:0] acl_data;
-
-	SPIController spi_control(
-        .iclk(clock4MHz),
-        .miso(ACL_CIPO),
-        .sclk(ACL_SCLK),
-        .mosi(ACL_COPI),
-        .cs(ACL_CSN),
-        .acl_data(acl_data)
-    );
-
-	//seven segment display
-	seg7_control display_control(
-        .CLK100MHZ(clock),
-        .acl_data(acl_data),
-        .seg(SEG),
-        .dp(DP),
-        .an(AN)
-    );
-
-	assign LED[14:10] = acl_data[14:10];    // 5 bits of x data
-    assign LED[9:5]   = acl_data[9:5];     // 5 bits of y data
-    assign LED[4:0]   = acl_data[4:0];      // 5 bits of z data
-	
 	// Main Processing Unit
 	processor CPU(.clock(clock), .reset(reset), 
 								
