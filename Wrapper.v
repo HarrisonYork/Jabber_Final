@@ -25,9 +25,9 @@
  **/
 
 module Wrapper (clock, reset,
-	SERVO_PWM);
+	SERVO_PWM, increment);
 
-	input clock, reset;
+	input clock, reset, increment;
 	
 	output reg [5:0] SERVO_PWM;
 	always @(servo_pwm) begin
@@ -48,48 +48,62 @@ module Wrapper (clock, reset,
 	//add PWM serializer for each servo
 	// make instruction that outputs from processor to serializer
 	// change duty cycle as needed
-	wire [6:0] SERVO0_DUTY,  SERVO1_DUTY,  SERVO2_DUTY,  SERVO3_DUTY,  SERVO4_DUTY,  SERVO5_DUTY;
-	assign SERVO0_DUTY = 7'd10;
-	assign SERVO1_DUTY = 7'd10;
-	assign SERVO2_DUTY = 7'd10;
-	assign SERVO3_DUTY = 7'd10;
-	assign SERVO4_DUTY = 7'd10;
-	assign SERVO5_DUTY = 7'd10;
+	
+	reg [6:0] SERVO_DUTY, SERVO0_DUTY,  SERVO1_DUTY,  SERVO2_DUTY,  SERVO3_DUTY,  SERVO4_DUTY,  SERVO5_DUTY;
+	
+	assign SERVO_DUTY = 7'd0;
+	
+	assign SERVO0_DUTY = 7'd0;
+	assign SERVO1_DUTY = 7'd0;
+	assign SERVO2_DUTY = 7'd0;
+	assign SERVO3_DUTY = 7'd0;
+	assign SERVO4_DUTY = 7'd0;
+	assign SERVO5_DUTY = 7'd0;
+	
+	always @(increment) begin
+		if (increment == 1) begin
+			SERVO_DUTY = SERVO_DUTY + 5;
+		end
+		if (SERVO_DUTY > 99) begin
+			SERVO_DUTY = 0;
+		end
+    end
+
 	wire [5:0] servo_pwm;
 	PWMSerializer servo0(
     .clk(clock),              // System Clock
     .reset(reset),            // Reset the counter
-    .duty_cycle(SERVO0_DUTY),       // Duty Cycle of the Wave, between 0 and 99
+    .duty_cycle(SERVO_DUTY),       // Duty Cycle of the Wave, between 0 and 99
     .signal(servo_pwm[0])   // Output PWM signal
     );
 	PWMSerializer servo1(
     .clk(clock),              // System Clock
     .reset(reset),            // Reset the counter
-    .duty_cycle(SERVO1_DUTY),       // Duty Cycle of the Wave, between 1 and 99
+    .duty_cycle(SERVO_DUTY),       // Duty Cycle of the Wave, between 1 and 99
     .signal(servo_pwm[1])   // Output PWM signal
     );
 	PWMSerializer servo2(
     .clk(clock),              // System Clock
     .reset(reset),            // Reset the counter
-    .duty_cycle(SERVO2_DUTY),       // Duty Cycle of the Wave, between 2 and 99
+    .duty_cycle(SERVO_DUTY),       // Duty Cycle of the Wave, between 2 and 99
     .signal(servo_pwm[2])   // Output PWM signal
     );
 	PWMSerializer servo3(
     .clk(clock),              // System Clock
     .reset(reset),            // Reset the counter
-    .duty_cycle(SERVO3_DUTY),       // Duty Cycle of the Wave, between 3 and 99
+    .duty_cycle(SERVO_DUTY),       // Duty Cycle of the Wave, between 3 and 99
     .signal(servo_pwm[3])   // Output PWM signal
     );
 	PWMSerializer servo4(
     .clk(clock),              // System Clock
     .reset(reset),            // Reset the counter
-    .duty_cycle(SERVO4_DUTY),       // Duty Cycle of the Wave, between 4 and 99
+    .duty_cycle(SERVO_DUTY),       // Duty Cycle of the Wave, between 4 and 99
     .signal(servo_pwm[4])   // Output PWM signal
     );
 	PWMSerializer servo5(
     .clk(clock),              // System Clock
     .reset(reset),            // Reset the counter
-    .duty_cycle(SERVO5_DUTY),       // Duty Cycle of the Wave, between 5 and 99
+    .duty_cycle(SERVO_DUTY),       // Duty Cycle of the Wave, between 5 and 99
     .signal(servo_pwm[5])   // Output PWM signal
     );
 
