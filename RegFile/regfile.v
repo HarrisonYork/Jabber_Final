@@ -2,14 +2,30 @@ module regfile (
 	clock,
 	ctrl_writeEnable, ctrl_reset, ctrl_writeReg,
 	ctrl_readRegA, ctrl_readRegB, data_writeReg,
-	data_readRegA, data_readRegB
-);
+	data_readRegA, data_readRegB,
+	
+	// SERVO
+	servo0, servo1,
+	servo2, servo3,
+	servo4, servo5
+	);
 
 	input clock, ctrl_writeEnable, ctrl_reset;
 	input [4:0] ctrl_writeReg, ctrl_readRegA, ctrl_readRegB;
 	input [31:0] data_writeReg;
 
 	output [31:0] data_readRegA, data_readRegB;
+
+	// SERVO REGISTERS (1 - 6)
+
+	output [6:0] servo0, servo1, servo2, servo3, servo4, servo5;
+
+	assign servo0[6:0] = register1_out[6:0];
+	assign servo1[6:0] = register2_out[6:0];
+	assign servo2[6:0] = register3_out[6:0];
+	assign servo3[6:0] = register4_out[6:0];
+	assign servo4[6:0] = register5_out[6:0];
+	assign servo5[6:0] = register6_out[6:0];
 
 	wire [31:0] write_to_this_register;
 

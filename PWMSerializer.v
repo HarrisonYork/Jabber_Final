@@ -26,10 +26,10 @@ module PWMSerializer #(
     localparam PULSE_HALF   = PULSE_WINDOW >> 1;
     localparam PULSE_BITS   = $clog2(PULSE_HALF) + 1;
     wire[32:0] mult;
-    assign mult = 32'd20000;
+    assign mult = 32'd2000;
     reg [32:0] LIMIT;
     always @(clk) begin
-        LIMIT = duty_cycle * mult;
+        LIMIT = (duty_cycle * mult) + 50000;
     end
     
     // Use a counter to determine when the pulse is HIGH
