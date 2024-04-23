@@ -5,5 +5,5 @@ April 2024.
 
 
 ### Credit
-CAD models for the original robot arm were created by Build Some Stuff
+CAD models for the original robot arm were created by Build Some Stuff:
 https://youtu.be/AIsVlgopqJc?si=QY2AmwcVE7paX2Y9
