@@ -25,17 +25,28 @@
  **/
 
 module Wrapper (clock, reset,
-	SERVO_PWM, JS_U, JS_D, JS_L, JS_R);
+	SERVO_PWM, JS1, JS2, LED, BTN, CUSTOM_BTN);
 
 	input clock, reset;
-
-	input JS_U, JS_D, JS_L, JS_R;
-
+	input BTN, CUSTOM_BTN;
+	input [3:0] JS1, JS2;
 	
-	output reg [5:0] SERVO_PWM;
-	always @(servo_pwm) begin
-	   SERVO_PWM = servo_pwm;
-   	end
+	output reg [4:0] SERVO_PWM;
+	output reg [15:0] LED;
+	
+//	reg JS1_U, JS1_D, JS1_L, JS1_R, JS2_U, JS2_D, JS2_L, JS2_R;
+	
+//	always @(posedge clock_20Hz) begin
+//	   JS1_U = JS1[0];
+//	   JS1_D = JS1[1];
+//	   JS1_L = JS1[2];
+//	   JS1_R = JS1[3];
+	   
+//	   JS2_U = JS2[0];
+//	   JS2_D = JS2[1];
+//	   JS2_L = JS2[2];
+//	   JS2_R = JS2[3];
+//	end
 
 	wire rwe, mwe;
 	wire[4:0] rd, rs1, rs2;
@@ -44,50 +55,61 @@ module Wrapper (clock, reset,
 		memAddr, memDataIn, memDataOut;
 
 	// MEMORY FILE
-	localparam INSTR_FILE = "servotest";
+	localparam INSTR_FILE = "pls_work";
 
 	// SERVO CONTROL
 	wire clock_20Hz;
 	slow_clock_gen cgen(clock, clock_20Hz);
 
-	always @(posedge clock_20Hz) begin
-		if (JS_U) begin
-			if (SERVO0_DUTY < 99) begin
-				SERVO0_DUTY = SERVO0_DUTY + 1;
-			end
-		end
-		if (JS_D) begin
-			if (SERVO0_DUTY > 0) begin
-				SERVO0_DUTY = SERVO0_DUTY - 1;
-			end
-		end
-		if (JS_L) begin
-			if (SERVO0_DUTY > 0) begin
-				SERVO0_DUTY = SERVO0_DUTY - 1;
-			end
-		end
-		if (JS_R) begin
-			if (SERVO0_DUTY < 99) begin
-				SERVO0_DUTY = SERVO0_DUTY + 1;
-			end
-		end
+//	always @(posedge clock_20Hz) begin
+//		if (JS_U == 0) begin
+//			if (SERVO1_DUTY < 99) begin
+//				SERVO1_DUTY = SERVO1_DUTY + 1;
+//			end
+//		end
+//		if (JS_D == 0) begin
+//			if (SERVO1_DUTY > 0) begin
+//				SERVO1_DUTY = SERVO1_DUTY - 1;
+//			end
+//		end
+//		if (JS_L == 0) begin
+//			if (SERVO2_DUTY < 99) begin
+//				SERVO2_DUTY = SERVO2_DUTY + 1;
+//			end
+//		end
+//		if (JS_R == 0) begin
+//			if (SERVO2_DUTY > 0) begin
+//				SERVO2_DUTY = SERVO2_DUTY - 1;
+//			end
+//		end
+//	end
+	
+	reg [6:0] SERVO_DUTY, SERVO0_DUTY,  SERVO1_DUTY,  SERVO2_DUTY,  SERVO3_DUTY,  SERVO4_DUTY;
+	wire [6:0] servo0, servo1, servo2, servo3, servo4;
+	wire [15:0] led;
+	
+	wire [3:0] js1, js2;
+	assign js1[3:0] = JS1[3:0];
+	assign js2[3:0] = JS2[3:0];
+	
+	wire lsb_25;
+	
+	always @(posedge clock) begin
+		SERVO0_DUTY = servo0; //reg1
+		SERVO1_DUTY = servo1; //reg2
+		SERVO2_DUTY = servo2; //reg3
+		SERVO3_DUTY = servo3; //reg4
+		SERVO4_DUTY = servo4; //reg5
+		LED[6:0] = SERVO0_DUTY[6:0];
+		LED[15] = lsb_25;
+		LED[14:7] = led[14:7];
 	end
 	
-	reg [6:0] SERVO_DUTY, SERVO0_DUTY,  SERVO1_DUTY,  SERVO2_DUTY,  SERVO3_DUTY,  SERVO4_DUTY,  SERVO5_DUTY;
-	wire [6:0] servo0, servo1, servo2, servo3, servo4, servo5;
+	wire [4:0] servo_pwm;
+	always @(servo_pwm) begin
+	   SERVO_PWM = servo_pwm;
+   	end
 	
-	initial SERVO0_DUTY = 7'd0;
-
-//	always @(posedge clock) begin
-//		SERVO0_DUTY = servo0;
-//		SERVO1_DUTY = servo1;
-//		SERVO2_DUTY = servo2;
-//		SERVO3_DUTY = servo3;
-//		SERVO4_DUTY = servo4;
-//		SERVO5_DUTY = servo5;
-//	end
-
-	wire [5:0] servo_pwm;
 	PWMSerializerBigBoy servo0_(
     .clk(clock),              // System Clock
     .reset(reset),            // Reset the counter
@@ -112,17 +134,11 @@ module Wrapper (clock, reset,
     .duty_cycle(SERVO3_DUTY),       // Duty Cycle of the Wave, between 3 and 99
     .signal(servo_pwm[3])   // Output PWM signal
     );
-	PWMSerializer servo4_(
+	PWMSerializerMini servo4_(
     .clk(clock),              // System Clock
     .reset(reset),            // Reset the counter
     .duty_cycle(SERVO4_DUTY),       // Duty Cycle of the Wave, between 4 and 99
     .signal(servo_pwm[4])   // Output PWM signal
-    );
-	PWMSerializer servo5_(
-    .clk(clock),              // System Clock
-    .reset(reset),            // Reset the counter
-    .duty_cycle(SERVO5_DUTY),       // Duty Cycle of the Wave, between 5 and 99
-    .signal(servo_pwm[5])   // Output PWM signal
     );
 
 	// Main Processing Unit
@@ -157,9 +173,13 @@ module Wrapper (clock, reset,
 		// SERVO
 		.servo0(servo0), .servo1(servo1),
 		.servo2(servo2), .servo3(servo3),
-		.servo4(servo4), .servo5(servo5)
+		.servo4(servo4),
+		.js1(js1), .js2(js2), .BTN(BTN), .custom_btn(CUSTOM_BTN),
+		
+		//Test output cgen
+		.test_reg(led), .test_val(lsb_25)
 		);
-						
+	
 	// Processor Memory (RAM)
 	RAM ProcMem(.clk(clock),
 		.wEn(mwe), 

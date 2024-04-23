@@ -7,25 +7,51 @@ module regfile (
 	// SERVO
 	servo0, servo1,
 	servo2, servo3,
-	servo4, servo5
+	servo4,
+	
+	js1, js2, BTN, custom_btn,
+	
+	//test reg output
+	test_reg, test_val
 	);
 
 	input clock, ctrl_writeEnable, ctrl_reset;
 	input [4:0] ctrl_writeReg, ctrl_readRegA, ctrl_readRegB;
 	input [31:0] data_writeReg;
+	
+	input [3:0] js1, js2; //joystick U, D, L, R
+	input BTN, custom_btn;
+	wire [31:0] data_js1, data_js2;
+	
+	assign data_js1[31:4] = 27'd0;
+    assign data_js2[31:4] = 27'd0;
+	assign data_js1[3:0] = js1[3:0];
+    assign data_js2[3:0] = js2[3:0];
+	//assign data_js1[3:0] = 4'b0101;
+    //assign data_js2[3:0] = 4'b0101;
+    
+    wire [31:0] BTN_reg, CUSTOM_reg;
+    assign BTN_reg[31:1] = 31'd0;
+    assign BTN_reg[0] = BTN;
+    
+    assign CUSTOM_reg[0] = custom_btn;
+    assign CUSTOM_reg[31:1] = 31'd0;
+    
 
 	output [31:0] data_readRegA, data_readRegB;
-
+    output [15:0] test_reg;
+    output test_val;
+    assign test_val = register25_out[0];
+    assign test_reg = register7_out[15:0];
 	// SERVO REGISTERS (1 - 6)
 
-	output [6:0] servo0, servo1, servo2, servo3, servo4, servo5;
+	output [6:0] servo0, servo1, servo2, servo3, servo4;
 
 	assign servo0[6:0] = register1_out[6:0];
 	assign servo1[6:0] = register2_out[6:0];
 	assign servo2[6:0] = register3_out[6:0];
 	assign servo3[6:0] = register4_out[6:0];
 	assign servo4[6:0] = register5_out[6:0];
-	assign servo5[6:0] = register6_out[6:0];
 
 	wire [31:0] write_to_this_register;
 
@@ -78,13 +104,15 @@ module regfile (
 	wire [31:0] register5_out;
 	register register5(clock, decoded_write_enable[5], data_writeReg, register5_out, ctrl_reset);
 	wire [31:0] register6_out;
-	register register6(clock, decoded_write_enable[6], data_writeReg, register6_out, ctrl_reset);
+	register register6(clock, hot_enable, CUSTOM_reg, register6_out, ctrl_reset);
+	
 	wire [31:0] register7_out;
-	register register7(clock, decoded_write_enable[7], data_writeReg, register7_out, ctrl_reset);
+	register register7(clock, hot_enable, data_js1, register7_out, ctrl_reset);
 	wire [31:0] register8_out;
-	register register8(clock, decoded_write_enable[8], data_writeReg, register8_out, ctrl_reset);
+	register register8(clock, hot_enable, data_js2, register8_out, ctrl_reset);
 	wire [31:0] register9_out;
-	register register9(clock, decoded_write_enable[9], data_writeReg, register9_out, ctrl_reset);
+	register register9(clock, hot_enable, BTN_reg, register9_out, ctrl_reset);
+	
 	wire [31:0] register10_out;
 	register register10(clock, decoded_write_enable[10], data_writeReg, register10_out, ctrl_reset);
 	wire [31:0] register11_out;

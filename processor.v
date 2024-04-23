@@ -67,6 +67,27 @@ module processor(
     wire not_clock;
     assign not_clock = !clock;
 
+//////////////////////////////////////// Handling Delay  //////////////////////////////////////// 
+reg [63:0] current; // Create register to count clock cycles
+reg [63:0] count_till; // Create register to hold which clock cycle to count till
+
+/* Math:
+Counts to 5000 every 1 second. Counts to 5 every 1ms*/
+
+always @(negedge clock or posedge reset) begin //make sure to insert 5 nops
+    if (reset) begin
+        current = 0;
+        count_till = 0;
+    end else begin
+        current = current + 1;
+        if (q_imem[31:27] == 5'b11111) begin
+            count_till = current + 100000 * q_imem[26:0] + 1;  // Update count_till based on q_imem value
+        end
+    end
+end
+
+    //////////////////////////////////////////////////////////////////////////////// 
+
 //Fetch
     wire [31:0] PC, pc_address, pc_address_bex, pc_address_jump, pc_address_immediate, pc_address_reset, pc_address_increment, nop, increment, PC_plus_immediate_one;
     wire enable, pc_ovf;
@@ -81,7 +102,7 @@ module processor(
     mux_2_32 mux_bex(pc_address_bex, bex_select, pc_address_jump, T_bex);
     mux_2_32 mux_pc_jr(pc_address, jr_select & !branch_taken, pc_address_bex, OPERAND_B);
     
-    register reg_pc_address(not_clock, !div_stall & !data_stall & !ALU_exception & !lw_edge_stall & !mult_stall, pc_address, PC, reset);
+    register reg_pc_address(not_clock, !div_stall & !data_stall & !ALU_exception & !lw_edge_stall & !mult_stall & !stall_for_delay, pc_address, PC, reset);
     adder pc_counter(pc_address_increment, PC, increment, pc_ovf, !enable);
     adder pc_immediate_plus_one(PC_plus_immediate_one, PC_plus_immediate, increment, pc_ovf, !enable);
 
@@ -90,15 +111,29 @@ module processor(
 
 //Fetch/Decode
     wire [31:0] FD_PC;
-    register reg_fd_pc(not_clock, !div_stall & !data_stall & !ALU_exception & !lw_edge_stall & !mult_stall, PC, FD_PC, reset);
+    register reg_fd_pc(not_clock, !div_stall & !data_stall & !ALU_exception & !lw_edge_stall & !mult_stall & !stall_for_delay, PC, FD_PC, reset);
     
     // get instruction from imem
     wire [31:0] FD_IR, muxed_FD_IR;
     wire nop_ctrl;
-    register reg_fd_ir(not_clock, !div_stall & !data_stall & !ALU_exception & !lw_edge_stall & !mult_stall, muxed_FD_IR, FD_IR, reset);
+    register reg_fd_ir(not_clock, !div_stall & !data_stall & !ALU_exception & !lw_edge_stall & !mult_stall & !stall_for_delay, muxed_FD_IR, FD_IR, reset);
     mux_2_32 mux_fd_ir(muxed_FD_IR, reset | branch_taken | jr_select | bex_select | select_PC_T, q_imem, nop);
 
 //Decode
+
+        //////////////////////////////////////// Handling Delay  //////////////////////////////////////// 
+    reg stall_for_delay;
+
+    always @(posedge clock) begin
+        if (current <= count_till && FD_IR[31:27] == 5'b11111) begin
+            stall_for_delay = 1'b1;
+        end else begin
+            stall_for_delay = 1'b0;
+        end
+    end
+
+    // want to stall PC and Fetch latch, and insert nops forward
+    //////////////////////////////////////////////////////////////////////////////// 
     // register(clock, inEnable, inVal, outVal, reset);
     // instruction deconstruction
     wire [4:0] opcode, reg_d, reg_s, reg_t, reg0;
@@ -185,7 +220,7 @@ module processor(
     register reg_dx_pc(not_clock, !mult_stall, FD_PC, DX_PC, reset);
     
     wire [31:0] DX_IR, muxed_DX_IR;
-    register reg_dx_ir(not_clock, !mult_stall, muxed_DX_IR, DX_IR, reset);
+    register reg_dx_ir(not_clock, !mult_stall & !stall_for_delay, muxed_DX_IR, DX_IR, reset);
     mux_2_32 mux_dx_ir(muxed_DX_IR, reset | branch_taken | jr_select | bex_select | data_stall | ALU_exception | div_stall | lw_edge_stall, FD_IR, nop);
 
     wire [31:0] OPERAND_A, OPERAND_B;
@@ -266,7 +301,7 @@ module processor(
     
 //Execute/Memory
     wire [31:0] XM_IR, mux_XM_IR;
-    register reg_xm_ir(not_clock, !ALU_exception, mux_XM_IR, XM_IR, reset);
+    register reg_xm_ir(not_clock, !ALU_exception & !stall_for_delay, mux_XM_IR, XM_IR, reset);
     mux_2_32 mux_xm_ir(mux_XM_IR, div_stall || jal_disable_X || mult_stall, DX_IR, nop);
 
     wire [31:0] ALU_OUT, XM_B, mux_XM_B;
@@ -285,7 +320,7 @@ module processor(
 
 //Memory/Writeback
     wire [31:0] MW_IR, mux_MW_IR;
-    register reg_mw_ir(not_clock, !ALU_exception, mux_MW_IR, MW_IR, reset);
+    register reg_mw_ir(not_clock, !ALU_exception & !stall_for_delay, mux_MW_IR, MW_IR, reset);
     mux_2_32 muxMXIR(mux_MW_IR, jal_disable_M, XM_IR, nop);
 
     wire [31:0] MW_ALU_OUT, MW_Data;
